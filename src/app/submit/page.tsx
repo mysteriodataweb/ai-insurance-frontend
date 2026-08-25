@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { submitClaim } from "@/lib/api";
-import { ArrowLeft, ArrowRight, CheckCircle, User, FileText, MapPin, DollarSign } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle, User, FileText, MapPin, DollarSign, Sparkles } from "lucide-react";
 import clsx from "clsx";
 
 const steps = [
@@ -14,14 +14,9 @@ const steps = [
 export default function SubmitClaim() {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
-    customer_name: "",
-    customer_email: "",
-    raw_description: "",
-    policy_number: "",
-    incident_type: "",
-    incident_date: "",
-    incident_location: "",
-    estimated_amount: "",
+    customer_name: "", customer_email: "", raw_description: "",
+    policy_number: "", incident_type: "", incident_date: "",
+    incident_location: "", estimated_amount: "",
   });
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -43,38 +38,38 @@ export default function SubmitClaim() {
       };
       const res = await submitClaim(data);
       setResult(res);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err: any) { setError(err.message); }
+    finally { setLoading(false); }
   };
 
   if (result) {
     return (
-      <div className="max-w-lg mx-auto text-center py-12">
-        <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <CheckCircle className="text-green-600" size={40} />
-        </div>
-        <h2 className="text-2xl font-bold mb-2">Claim Submitted!</h2>
-        <p className="text-gray-500 mb-6">Your claim has been received and is being processed.</p>
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6 text-left">
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-gray-500 text-sm">Claim ID</span>
-              <span className="font-mono text-sm">{result.id?.slice(0, 8)}...</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500 text-sm">Status</span>
-              <span className="text-sm font-medium capitalize">{result.status}</span>
+      <div className="max-w-lg mx-auto py-12 animate-scale-in">
+        <div className="card p-10 text-center">
+          <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-[0_8px_24px_rgba(34,197,94,0.3)]">
+            <CheckCircle className="text-white" size={40} />
+          </div>
+          <h2 className="text-2xl font-black mb-2">Claim Submitted!</h2>
+          <p className="text-gray-500 mb-8">Your claim has been received and is being processed.</p>
+          <div className="card p-5 mb-8 text-left bg-gray-50/50">
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400 text-sm">Claim ID</span>
+                <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded-lg">{result.id?.slice(0, 8)}...</span>
+              </div>
+              <div className="h-px bg-gray-200" />
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400 text-sm">Status</span>
+                <span className="badge-blue">{result.status}</span>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="flex gap-3 justify-center">
-          <a href="/dashboard" className="btn-primary">View Dashboard</a>
-          <button onClick={() => { setResult(null); setStep(1); setForm({ customer_name: "", customer_email: "", raw_description: "", policy_number: "", incident_type: "", incident_date: "", incident_location: "", estimated_amount: "" }); }} className="btn-secondary">
-            Submit Another
-          </button>
+          <div className="flex gap-3 justify-center">
+            <a href="/dashboard" className="btn-primary">View Dashboard</a>
+            <button onClick={() => { setResult(null); setStep(1); setForm({ customer_name: "", customer_email: "", raw_description: "", policy_number: "", incident_type: "", incident_date: "", incident_location: "", estimated_amount: "" }); }} className="btn-secondary">
+              Submit Another
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -83,106 +78,132 @@ export default function SubmitClaim() {
   return (
     <div className="max-w-2xl mx-auto">
       {/* Step Indicator */}
-      <div className="flex items-center justify-center gap-4 mb-10">
-        {steps.map((s, i) => (
-          <div key={s.id} className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className={clsx(
-                "w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all",
-                step >= s.id ? "bg-brand-600 text-white" : "bg-gray-100 text-gray-400"
-              )}>
-                {step > s.id ? <CheckCircle size={18} /> : s.id}
+      <div className="card p-6 mb-6">
+        <div className="flex items-center justify-between">
+          {steps.map((s, i) => (
+            <div key={s.id} className="flex items-center flex-1">
+              <div className="flex items-center gap-3">
+                <div className={clsx(
+                  "w-10 h-10 rounded-2xl flex items-center justify-center text-sm font-bold transition-all duration-300",
+                  step >= s.id
+                    ? "bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/25"
+                    : "bg-gray-100 text-gray-400"
+                )}>
+                  {step > s.id ? <CheckCircle size={18} /> : s.id}
+                </div>
+                <div className="hidden sm:block">
+                  <p className={clsx("text-sm font-bold", step >= s.id ? "text-gray-900" : "text-gray-400")}>{s.label}</p>
+                </div>
               </div>
-              <span className={clsx("text-sm font-medium hidden sm:block", step >= s.id ? "text-brand-600" : "text-gray-400")}>
-                {s.label}
-              </span>
+              {i < steps.length - 1 && (
+                <div className="flex-1 mx-4">
+                  <div className={clsx("h-1 rounded-full transition-all duration-500", step > s.id ? "bg-gradient-to-r from-blue-500 to-purple-500" : "bg-gray-100")} />
+                </div>
+              )}
             </div>
-            {i < steps.length - 1 && <div className={clsx("w-12 h-0.5", step > s.id ? "bg-brand-600" : "bg-gray-200")} />}
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
-      {error && <div className="bg-red-50 text-red-700 p-4 rounded-xl mb-6 text-sm">{error}</div>}
+      {error && (
+        <div className="bg-red-50 text-red-700 p-4 rounded-2xl mb-6 text-sm font-medium border border-red-100 flex items-center gap-2">
+          <div className="w-2 h-2 bg-red-500 rounded-full" />
+          {error}
+        </div>
+      )}
 
-      <div className="bg-white rounded-2xl border border-gray-100 p-8">
-        {/* Step 1: Personal */}
+      <div className="card p-8">
+        {/* Step 1 */}
         {step === 1 && (
-          <div className="space-y-5 animate-fade-in">
-            <h2 className="text-xl font-bold mb-6">Personal Information</h2>
+          <div className="space-y-6 animate-slide-up">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
-              <input type="text" required value={form.customer_name} onChange={e => update("customer_name", e.target.value)} placeholder="John Doe" className="input-field" />
+              <h2 className="text-xl font-black mb-1">Personal Information</h2>
+              <p className="text-sm text-gray-400">Tell us about yourself</p>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
-              <input type="email" required value={form.customer_email} onChange={e => update("customer_email", e.target.value)} placeholder="john@example.com" className="input-field" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Policy Number</label>
-              <input type="text" value={form.policy_number} onChange={e => update("policy_number", e.target.value)} placeholder="POL-2024-XXX" className="input-field" />
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[13px] font-semibold text-gray-600 mb-2">Full Name *</label>
+                <input type="text" required value={form.customer_name} onChange={e => update("customer_name", e.target.value)} placeholder="John Doe" className="input-field" />
+              </div>
+              <div>
+                <label className="block text-[13px] font-semibold text-gray-600 mb-2">Email *</label>
+                <input type="email" required value={form.customer_email} onChange={e => update("customer_email", e.target.value)} placeholder="john@example.com" className="input-field" />
+              </div>
+              <div>
+                <label className="block text-[13px] font-semibold text-gray-600 mb-2">Policy Number</label>
+                <input type="text" value={form.policy_number} onChange={e => update("policy_number", e.target.value)} placeholder="POL-2024-XXX" className="input-field" />
+              </div>
             </div>
           </div>
         )}
 
-        {/* Step 2: Details */}
+        {/* Step 2 */}
         {step === 2 && (
-          <div className="space-y-5 animate-fade-in">
-            <h2 className="text-xl font-bold mb-6">Incident Details</h2>
+          <div className="space-y-6 animate-slide-up">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
-              <textarea required rows={4} value={form.raw_description} onChange={e => update("raw_description", e.target.value)} placeholder="Describe what happened in detail..." className="input-field" />
+              <h2 className="text-xl font-black mb-1">Incident Details</h2>
+              <p className="text-sm text-gray-400">Describe what happened</p>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Incident Type</label>
-                <select value={form.incident_type} onChange={e => update("incident_type", e.target.value)} className="input-field">
-                  <option value="">Select type</option>
-                  {["Car accident", "Theft", "Fire", "Water damage", "Natural disaster", "Liability", "Other"].map(t => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-                </select>
+                <label className="block text-[13px] font-semibold text-gray-600 mb-2">Description *</label>
+                <textarea required rows={4} value={form.raw_description} onChange={e => update("raw_description", e.target.value)} placeholder="Describe what happened in detail..." className="input-field resize-none" />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
-                <input type="date" value={form.incident_date} onChange={e => update("incident_date", e.target.value)} className="input-field" />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[13px] font-semibold text-gray-600 mb-2">Incident Type</label>
+                  <select value={form.incident_type} onChange={e => update("incident_type", e.target.value)} className="input-field">
+                    <option value="">Select type</option>
+                    {["Car accident", "Theft", "Fire", "Water damage", "Natural disaster", "Liability", "Other"].map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[13px] font-semibold text-gray-600 mb-2">Date</label>
+                  <input type="date" value={form.incident_date} onChange={e => update("incident_date", e.target.value)} className="input-field" />
+                </div>
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
-                <input type="text" value={form.incident_location} onChange={e => update("incident_location", e.target.value)} placeholder="City" className="input-field" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Estimated Amount ($)</label>
-                <input type="number" value={form.estimated_amount} onChange={e => update("estimated_amount", e.target.value)} placeholder="5000" className="input-field" />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[13px] font-semibold text-gray-600 mb-2">Location</label>
+                  <input type="text" value={form.incident_location} onChange={e => update("incident_location", e.target.value)} placeholder="City" className="input-field" />
+                </div>
+                <div>
+                  <label className="block text-[13px] font-semibold text-gray-600 mb-2">Estimated Amount ($)</label>
+                  <input type="number" value={form.estimated_amount} onChange={e => update("estimated_amount", e.target.value)} placeholder="5000" className="input-field" />
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Step 3: Review */}
+        {/* Step 3 */}
         {step === 3 && (
-          <div className="space-y-5 animate-fade-in">
-            <h2 className="text-xl font-bold mb-6">Review Your Claim</h2>
-            <div className="space-y-3">
+          <div className="space-y-6 animate-slide-up">
+            <div>
+              <h2 className="text-xl font-black mb-1">Review Your Claim</h2>
+              <p className="text-sm text-gray-400">Verify everything before submitting</p>
+            </div>
+            <div className="space-y-1">
               {[
-                { label: "Name", value: form.customer_name },
-                { label: "Email", value: form.customer_email },
-                { label: "Policy", value: form.policy_number || "Not provided" },
-                { label: "Type", value: form.incident_type || "Not specified" },
-                { label: "Date", value: form.incident_date || "Not specified" },
-                { label: "Location", value: form.incident_location || "Not specified" },
-                { label: "Amount", value: form.estimated_amount ? $ : "Not specified" },
+                { label: "Name", value: form.customer_name, icon: User },
+                { label: "Email", value: form.customer_email, icon: FileText },
+                { label: "Policy", value: form.policy_number || "Not provided", icon: FileText },
+                { label: "Type", value: form.incident_type || "Not specified", icon: FileText },
+                { label: "Date", value: form.incident_date || "Not specified", icon: FileText },
+                { label: "Location", value: form.incident_location || "Not specified", icon: MapPin },
+                { label: "Amount", value: form.estimated_amount ? `$${Number(form.estimated_amount).toLocaleString()}` : "Not specified", icon: DollarSign },
               ].map((item) => (
-                <div key={item.label} className="flex justify-between py-2 border-b border-gray-50">
-                  <span className="text-gray-500 text-sm">{item.label}</span>
-                  <span className="text-sm font-medium">{item.value}</span>
+                <div key={item.label} className="flex justify-between items-center py-3 px-4 rounded-xl hover:bg-gray-50 transition-colors">
+                  <span className="text-gray-400 text-sm">{item.label}</span>
+                  <span className="text-sm font-semibold">{item.value}</span>
                 </div>
               ))}
               {form.raw_description && (
-                <div className="mt-4">
-                  <p className="text-gray-500 text-sm mb-2">Description</p>
-                  <p className="text-sm bg-gray-50 rounded-xl p-4">{form.raw_description}</p>
+                <div className="mt-4 p-4 bg-gray-50 rounded-2xl">
+                  <p className="text-xs text-gray-400 font-semibold mb-2 uppercase tracking-wider">Description</p>
+                  <p className="text-sm text-gray-600 leading-relaxed">{form.raw_description}</p>
                 </div>
               )}
             </div>
@@ -191,7 +212,7 @@ export default function SubmitClaim() {
 
         {/* Navigation */}
         <div className="flex justify-between mt-8 pt-6 border-t border-gray-100">
-          <button onClick={() => setStep(Math.max(1, step - 1))} disabled={step === 1} className="btn-secondary disabled:opacity-30 flex items-center gap-2">
+          <button onClick={() => setStep(Math.max(1, step - 1))} disabled={step === 1} className="btn-ghost disabled:opacity-30 flex items-center gap-2">
             <ArrowLeft size={16} /> Previous
           </button>
           {step < 3 ? (
@@ -201,14 +222,9 @@ export default function SubmitClaim() {
           ) : (
             <button onClick={handleSubmit} disabled={loading} className="btn-primary flex items-center gap-2">
               {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Submitting...
-                </>
+                <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Submitting...</>
               ) : (
-                <>
-                  Submit Claim <ArrowRight size={16} />
-                </>
+                <><Sparkles size={16} /> Submit Claim</>
               )}
             </button>
           )}
