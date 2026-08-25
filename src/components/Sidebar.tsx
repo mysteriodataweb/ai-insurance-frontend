@@ -2,23 +2,15 @@
 
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Home, FileText, LayoutDashboard, BarChart3, Shield, Menu, X, ChevronDown, Settings, LogOut, Command } from "lucide-react";
+import { Home, FileText, LayoutDashboard, BarChart3, Shield, Menu, X, Settings, LogOut, Search } from "lucide-react";
 import clsx from "clsx";
 import CommandPalette from "@/components/CommandPalette";
 
-const navGroups = [
-  {
-    items: [
-      { href: "/", label: "Home", icon: Home },
-      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { href: "/submit", label: "Submit Claim", icon: FileText },
-      { href: "/analytics", label: "Analytics", icon: BarChart3 },
-    ],
-  },
-];
-
-const bottomItems = [
-  { href: "/login", label: "Sign In", icon: LogOut },
+const navItems = [
+  { href: "/", label: "Home", icon: Home },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/submit", label: "Submit Claim", icon: FileText },
+  { href: "/analytics", label: "Analytics", icon: BarChart3 },
 ];
 
 export default function Sidebar() {
@@ -41,99 +33,79 @@ export default function Sidebar() {
     <>
       <CommandPalette isOpen={cmdOpen} onClose={() => setCmdOpen(false)} />
 
-      {/* Mobile hamburger */}
       <button
         onClick={() => setOpen(!open)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2.5 bg-white rounded-xl shadow-lg border border-gray-100"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg border border-zinc-200"
       >
-        {open ? <X size={18} /> : <Menu size={18} />}
+        {open ? <X size={16} /> : <Menu size={16} />}
       </button>
 
-      {/* Overlay */}
       {open && (
-        <div className="lg:hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-40" onClick={() => setOpen(false)} />
+        <div className="lg:hidden fixed inset-0 bg-black/20 z-40" onClick={() => setOpen(false)} />
       )}
 
-      {/* Sidebar */}
       <aside
         className={clsx(
-          "fixed top-0 left-0 h-full w-[260px] sidebar z-40 transition-transform duration-300 ease-out",
+          "fixed top-0 left-0 h-full w-[240px] sidebar z-40 transition-transform duration-200",
           "lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="p-5 pb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-[0_2px_8px_rgba(37,99,235,0.35)]">
-                <Shield className="text-white" size={18} />
+          <div className="p-4 pb-2">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center">
+                <Shield className="text-white" size={16} />
               </div>
-              <div className="flex-1 min-w-0">
-                <h1 className="font-extrabold text-[15px] tracking-tight">AI Insurance</h1>
-                <p className="text-[11px] text-gray-400 font-medium">Operations Platform</p>
+              <div>
+                <h1 className="font-semibold text-sm">AI Insurance</h1>
+                <p className="text-[11px] text-zinc-400">Operations</p>
               </div>
             </div>
           </div>
 
-          {/* Search trigger */}
-          <div className="px-4 mb-2">
+          <div className="px-3 my-3">
             <button
               onClick={() => setCmdOpen(true)}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-gray-50 border border-gray-100 text-sm text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all"
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-100 text-sm text-zinc-400 hover:text-zinc-600 transition-colors"
             >
-              <Command size={14} />
+              <Search size={14} />
               <span className="flex-1 text-left">Search...</span>
-              <kbd className="hidden sm:inline-flex items-center h-5 px-1.5 text-[10px] font-mono text-gray-400 bg-white border border-gray-200 rounded-md">⌘K</kbd>
+              <kbd className="hidden sm:inline-flex items-center h-5 px-1.5 text-[10px] font-mono text-zinc-400 bg-white border border-zinc-200 rounded">⌘K</kbd>
             </button>
           </div>
 
-          {/* Divider */}
-          <div className="mx-4 h-px bg-gray-100" />
+          <div className="mx-3 h-px bg-zinc-200" />
 
-          {/* Navigation Groups */}
-          <nav className="flex-1 p-4 space-y-4">
-            {navGroups.map((group, idx) => (
-              <div key={idx} className="space-y-1">
-                {group.items.map((item) => {
-                  const isActive = pathname === item.href;
-                  return (
-                    <a key={item.href} href={item.href} className={clsx("sidebar-link group", isActive && "sidebar-link-active")}>
-                      <item.icon size={18} className={clsx(isActive ? "text-blue-600" : "text-gray-400 group-hover:text-blue-500")} />
-                      <span className="flex-1">{item.label}</span>
-                    </a>
-                  );
-                })}
-              </div>
-            ))}
+          <nav className="flex-1 p-3 space-y-0.5">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <a key={item.href} href={item.href} className={clsx("sidebar-link", isActive && "sidebar-link-active")}>
+                  <item.icon size={16} className={clsx(isActive ? "text-zinc-900" : "text-zinc-400")} />
+                  <span>{item.label}</span>
+                </a>
+              );
+            })}
           </nav>
 
-          {/* Bottom section */}
-          <div className="p-4 space-y-3">
-            {/* User card */}
-            <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-4 border border-blue-100/50">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-md">
-                  AI
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold truncate">Ops Agent</p>
-                  <p className="text-[11px] text-gray-400 truncate">admin@insurance.ai</p>
-                </div>
+          <div className="p-3 border-t border-zinc-200 space-y-1">
+            <div className="flex items-center gap-2.5 px-3 py-2">
+              <div className="w-7 h-7 bg-zinc-900 rounded-lg flex items-center justify-center text-white text-[11px] font-medium">
+                A
               </div>
-              <div className="flex items-center gap-1.5 text-[11px] text-green-600 font-medium">
-                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                Online
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium truncate">Ops Agent</p>
+                <p className="text-[11px] text-zinc-400 truncate">admin@insurance.ai</p>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
               </div>
             </div>
-
-            {/* Bottom nav */}
-            {bottomItems.map((item) => (
-              <a key={item.href} href={item.href} className="sidebar-link group">
-                <item.icon size={18} className="text-gray-400 group-hover:text-blue-500" />
-                <span className="flex-1">{item.label}</span>
-              </a>
-            ))}
+            <a href="/login" className="sidebar-link">
+              <LogOut size={16} className="text-zinc-400" />
+              <span>Sign In</span>
+            </a>
           </div>
         </div>
       </aside>
