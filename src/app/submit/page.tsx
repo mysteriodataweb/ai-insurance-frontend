@@ -4,6 +4,7 @@ import { useState } from "react";
 import { submitClaim } from "@/lib/api";
 import { ArrowLeft, ArrowRight, CheckCircle, User, FileText, MapPin, DollarSign, Sparkles } from "lucide-react";
 import clsx from "clsx";
+import FileUpload from "@/components/FileUpload";
 
 const steps = [
   { id: 1, label: "Personal", icon: User },
@@ -18,6 +19,7 @@ export default function SubmitClaim() {
     policy_number: "", incident_type: "", incident_date: "",
     incident_location: "", estimated_amount: "",
   });
+  const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState("");
@@ -62,11 +64,20 @@ export default function SubmitClaim() {
                 <span className="text-gray-400 text-sm">Status</span>
                 <span className="badge-blue">{result.status}</span>
               </div>
+              {files.length > 0 && (
+                <>
+                  <div className="h-px bg-gray-200" />
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400 text-sm">Attachments</span>
+                    <span className="text-sm font-medium">{files.length} file(s)</span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
           <div className="flex gap-3 justify-center">
             <a href="/dashboard" className="btn-primary">View Dashboard</a>
-            <button onClick={() => { setResult(null); setStep(1); setForm({ customer_name: "", customer_email: "", raw_description: "", policy_number: "", incident_type: "", incident_date: "", incident_location: "", estimated_amount: "" }); }} className="btn-secondary">
+            <button onClick={() => { setResult(null); setStep(1); setFiles([]); setForm({ customer_name: "", customer_email: "", raw_description: "", policy_number: "", incident_type: "", incident_date: "", incident_location: "", estimated_amount: "" }); }} className="btn-secondary">
               Submit Another
             </button>
           </div>
@@ -174,6 +185,11 @@ export default function SubmitClaim() {
                   <input type="number" value={form.estimated_amount} onChange={e => update("estimated_amount", e.target.value)} placeholder="5000" className="input-field" />
                 </div>
               </div>
+              {/* File Upload */}
+              <div>
+                <label className="block text-[13px] font-semibold text-gray-600 mb-2">Supporting Documents</label>
+                <FileUpload onFilesChange={setFiles} />
+              </div>
             </div>
           </div>
         )}
@@ -194,6 +210,7 @@ export default function SubmitClaim() {
                 { label: "Date", value: form.incident_date || "Not specified", icon: FileText },
                 { label: "Location", value: form.incident_location || "Not specified", icon: MapPin },
                 { label: "Amount", value: form.estimated_amount ? `$${Number(form.estimated_amount).toLocaleString()}` : "Not specified", icon: DollarSign },
+                { label: "Attachments", value: files.length > 0 ? `${files.length} file(s)` : "None", icon: FileText },
               ].map((item) => (
                 <div key={item.label} className="flex justify-between items-center py-3 px-4 rounded-xl hover:bg-gray-50 transition-colors">
                   <span className="text-gray-400 text-sm">{item.label}</span>

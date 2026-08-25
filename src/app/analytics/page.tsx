@@ -3,11 +3,10 @@
 import { useEffect, useState } from "react";
 import { getAnalyticsMetrics } from "@/lib/api";
 import KPICard from "@/components/KPICard";
+import ProgressMetricCard from "@/components/ProgressMetricCard";
 import AnimatedCounter from "@/components/AnimatedCounter";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, AreaChart, Area } from "recharts";
-import { FileText, CheckCircle, AlertTriangle, Clock, TrendingUp, Zap } from "lucide-react";
-
-const COLORS = ["#3b82f6", "#22c55e", "#ef4444", "#eab308", "#8b5cf6"];
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from "recharts";
+import { FileText, CheckCircle, AlertTriangle, Clock, Zap } from "lucide-react";
 
 const riskData = [
   { name: "Low", value: 1, fill: "#22c55e" },
@@ -23,17 +22,25 @@ const typeData = [
   { name: "Fire", count: 1 },
 ];
 
-const timeData = [
-  { name: "Mon", claims: 2, automated: 1 },
-  { name: "Tue", claims: 1, automated: 0 },
-  { name: "Wed", claims: 1, automated: 1 },
-  { name: "Thu", claims: 1, automated: 0 },
-  { name: "Fri", claims: 0, automated: 0 },
+const claimsOverTime = [
+  { date: "Mon", value: 2 },
+  { date: "Tue", value: 1 },
+  { date: "Wed", value: 1 },
+  { date: "Thu", value: 1 },
+  { date: "Fri", value: 0 },
 ];
 
-const processingData = [
-  { name: "Manual", time: 25 },
-  { name: "With AI", time: 8 },
+const processingTime = [
+  { date: "Manual", value: 25 },
+  { date: "With AI", value: 8 },
+];
+
+const weeklyTrend = [
+  { date: "Week 1", value: 2 },
+  { date: "Week 2", value: 3 },
+  { date: "Week 3", value: 1 },
+  { date: "Week 4", value: 4 },
+  { date: "Week 5", value: 2 },
 ];
 
 export default function Analytics() {
@@ -49,8 +56,8 @@ export default function Analytics() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Analytics & Business Impact</h1>
-        <p className="text-gray-500 text-sm">Measurable operational value of the platform</p>
+        <h1 className="text-2xl font-black tracking-tight">Analytics & Business Impact</h1>
+        <p className="text-gray-400 text-sm">Measurable operational value of the platform</p>
       </div>
 
       {/* KPI Cards */}
@@ -61,9 +68,36 @@ export default function Analytics() {
         <KPICard title="Under Review" value={metrics?.under_review || 0} icon={Clock} color="yellow" />
       </div>
 
+      {/* Progress Metric Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ProgressMetricCard
+          title="Claims Volume"
+          data={claimsOverTime}
+          color="#3b82f6"
+          delta="+25%"
+          deltaLabel="vs last week"
+          trend="up"
+        />
+        <ProgressMetricCard
+          title="Processing Time"
+          data={[
+            { date: "Mon", value: 22 },
+            { date: "Tue", value: 18 },
+            { date: "Wed", value: 15 },
+            { date: "Thu", value: 12 },
+            { date: "Fri", value: 8 },
+          ]}
+          total="8 min"
+          delta="-68%"
+          deltaLabel="vs manual"
+          trend="down"
+          color="#22c55e"
+        />
+      </div>
+
       {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <div className="card p-6">
           <h3 className="font-semibold mb-4">Claims by Type</h3>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={typeData}>
@@ -76,7 +110,7 @@ export default function Analytics() {
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <div className="card p-6">
           <h3 className="font-semibold mb-4">Risk Distribution</h3>
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
@@ -99,30 +133,29 @@ export default function Analytics() {
 
       {/* Charts Row 2 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
-          <h3 className="font-semibold mb-4">Claims Over Time</h3>
+        <div className="card p-6">
+          <h3 className="font-semibold mb-4">Weekly Trend</h3>
           <ResponsiveContainer width="100%" height={250}>
-            <AreaChart data={timeData}>
+            <AreaChart data={weeklyTrend}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-              <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+              <XAxis dataKey="date" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} />
               <Tooltip />
-              <Area type="monotone" dataKey="claims" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.1} />
-              <Area type="monotone" dataKey="automated" stroke="#22c55e" fill="#22c55e" fillOpacity={0.1} />
+              <Area type="monotone" dataKey="value" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.1} strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <div className="card p-6">
           <h3 className="font-semibold mb-4">Processing Time Comparison</h3>
           <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={processingData} layout="vertical">
+            <BarChart data={processingTime} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
               <XAxis type="number" tick={{ fontSize: 12 }} />
-              <YAxis dataKey="name" type="category" tick={{ fontSize: 12 }} width={80} />
+              <YAxis dataKey="date" type="category" tick={{ fontSize: 12 }} width={80} />
               <Tooltip />
-              <Bar dataKey="time" radius={[0, 8, 8, 0]}>
-                {processingData.map((entry, index) => <Cell key={index} fill={index === 0 ? "#ef4444" : "#22c55e"} />)}
+              <Bar dataKey="value" radius={[0, 8, 8, 0]}>
+                {processingTime.map((_, index) => <Cell key={index} fill={index === 0 ? "#ef4444" : "#22c55e"} />)}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -130,27 +163,32 @@ export default function Analytics() {
       </div>
 
       {/* Impact Section */}
-      <div className="bg-gradient-to-r from-brand-600 to-purple-600 rounded-2xl p-8 text-white">
-        <div className="flex items-center gap-2 mb-6">
-          <Zap size={20} />
-          <h3 className="font-semibold">Automation Impact</h3>
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white noise relative overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-20 -right-20 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
         </div>
-        <div className="grid grid-cols-3 gap-8">
-          <div className="text-center">
-            <p className="text-white/70 text-sm mb-2">Processing Time</p>
-            <div className="flex items-center justify-center gap-3">
-              <span className="text-lg line-through text-white/50">{metrics?.avg_processing_time_before}</span>
-              <span className="text-white/50">→</span>
-              <span className="text-3xl font-bold">{metrics?.avg_processing_time_after}</span>
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 mb-6">
+            <Zap size={20} />
+            <h3 className="font-semibold">Automation Impact</h3>
+          </div>
+          <div className="grid grid-cols-3 gap-8">
+            <div className="text-center">
+              <p className="text-white/70 text-sm mb-2">Processing Time</p>
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-lg line-through text-white/50">{metrics?.avg_processing_time_before}</span>
+                <span className="text-white/50">→</span>
+                <span className="text-3xl font-bold">{metrics?.avg_processing_time_after}</span>
+              </div>
             </div>
-          </div>
-          <div className="text-center">
-            <p className="text-white/70 text-sm mb-2">Time Saved</p>
-            <p className="text-4xl font-bold"><AnimatedCounter value={68} suffix="%" /></p>
-          </div>
-          <div className="text-center">
-            <p className="text-white/70 text-sm mb-2">Automation Rate</p>
-            <p className="text-4xl font-bold"><AnimatedCounter value={40} suffix="%" /></p>
+            <div className="text-center">
+              <p className="text-white/70 text-sm mb-2">Time Saved</p>
+              <p className="text-4xl font-bold"><AnimatedCounter value={68} suffix="%" /></p>
+            </div>
+            <div className="text-center">
+              <p className="text-white/70 text-sm mb-2">Automation Rate</p>
+              <p className="text-4xl font-bold"><AnimatedCounter value={40} suffix="%" /></p>
+            </div>
           </div>
         </div>
       </div>

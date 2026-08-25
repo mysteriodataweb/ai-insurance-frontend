@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { getClaim, extractClaim, getConversation, triggerFollowUp, customerRespond, assessRisk, claimAction, getRisk } from "@/lib/api";
 import RiskBadge from "@/components/RiskBadge";
 import StatusBadge from "@/components/StatusBadge";
+import ChatMessage from "@/components/ChatMessage";
 import { ArrowLeft, Brain, MessageSquare, Shield, AlertTriangle, CheckCircle, XCircle, Send, Clock, FileText } from "lucide-react";
 import clsx from "clsx";
 
@@ -95,7 +96,7 @@ export default function ClaimDetail() {
             <ArrowLeft size={20} />
           </a>
           <div>
-            <h1 className="text-2xl font-bold">{claim.customer_name}</h1>
+            <h1 className="text-2xl font-black tracking-tight">{claim.customer_name}</h1>
             <p className="text-sm text-gray-500">{claim.customer_email}</p>
           </div>
         </div>
@@ -107,7 +108,7 @@ export default function ClaimDetail() {
 
       <div className="bg-white rounded-2xl border border-gray-100 p-1 flex gap-1">
         {tabs.map((t) => (
-          <button key={t.id} onClick={() => setTab(t.id)} className={clsx("flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex-1 justify-center", tab === t.id ? "bg-brand-50 text-brand-600" : "text-gray-500 hover:bg-gray-50")}>
+          <button key={t.id} onClick={() => setTab(t.id)} className={clsx("flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex-1 justify-center", tab === t.id ? "bg-blue-50 text-blue-600 shadow-sm" : "text-gray-500 hover:bg-gray-50")}>
             <t.icon size={16} />
             {t.label}
           </button>
@@ -118,11 +119,11 @@ export default function ClaimDetail() {
         <div className="col-span-2">
           {tab === "overview" && (
             <div className="space-y-4 animate-fade-in">
-              <div className="bg-white rounded-2xl border border-gray-100 p-6">
+              <div className="card p-6">
                 <h2 className="font-semibold mb-4">Claim Description</h2>
                 <p className="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 rounded-xl p-4">{claim.raw_description}</p>
               </div>
-              <div className="bg-white rounded-2xl border border-gray-100 p-6">
+              <div className="card p-6">
                 <h2 className="font-semibold mb-4">Details</h2>
                 <div className="grid grid-cols-2 gap-4">
                   {[{ label: "Type", value: claim.incident_type }, { label: "Date", value: claim.incident_date }, { label: "Location", value: claim.incident_location }, { label: "Amount", value: claim.estimated_amount ? "$" + Number(claim.estimated_amount).toLocaleString() : null }, { label: "Policy", value: claim.policy_number }].map((item) => (
@@ -133,7 +134,7 @@ export default function ClaimDetail() {
                   ))}
                 </div>
               </div>
-              <div className="bg-white rounded-2xl border border-gray-100 p-6">
+              <div className="card p-6">
                 <h2 className="font-semibold mb-4">Timeline</h2>
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
@@ -149,7 +150,7 @@ export default function ClaimDetail() {
 
           {tab === "ai" && extraction && (
             <div className="space-y-4 animate-fade-in">
-              <div className="bg-white rounded-2xl border border-gray-100 p-6">
+              <div className="card p-6">
                 <h2 className="font-semibold mb-4">Extracted Information</h2>
                 <div className="space-y-3">
                   {Object.entries(extraction.extracted_data || {}).map(([key, value]) => {
@@ -172,17 +173,19 @@ export default function ClaimDetail() {
 
           {tab === "conversation" && (
             <div className="space-y-4 animate-fade-in">
-              <div className="bg-white rounded-2xl border border-gray-100 p-6">
-                <h2 className="font-semibold mb-4">Conversation History</h2>
-                {conversation.length === 0 ? <p className="text-gray-400 text-sm text-center py-8">No conversation yet.</p> : (
+              <div className="card p-6">
+                <h2 className="font-semibold mb-6">Conversation History</h2>
+                {conversation.length === 0 ? (
+                  <p className="text-gray-400 text-sm text-center py-8">No conversation yet.</p>
+                ) : (
                   <div className="space-y-4">
-                    {conversation.map((msg) => (
-                      <div key={msg.id} className={clsx("flex", msg.role === "customer" ? "justify-end" : "justify-start")}>
-                        <div className={clsx("max-w-[80%] rounded-2xl px-4 py-3", msg.role === "agent" ? "bg-brand-50 text-gray-800" : "bg-gray-800 text-white")}>
-                          <p className="text-xs opacity-60 mb-1">{msg.role === "agent" ? "AI Agent" : "Customer"}</p>
-                          <p className="text-sm">{msg.message}</p>
-                        </div>
-                      </div>
+                    {conversation.map((msg, i) => (
+                      <ChatMessage
+                        key={msg.id || i}
+                        role={msg.role === "customer" ? "customer" : "agent"}
+                        message={msg.message}
+                        timestamp={msg.created_at ? new Date(msg.created_at).toLocaleTimeString() : undefined}
+                      />
                     ))}
                   </div>
                 )}
@@ -192,7 +195,7 @@ export default function ClaimDetail() {
 
           {tab === "risk" && risk && (
             <div className="space-y-4 animate-fade-in">
-              <div className="bg-white rounded-2xl border border-gray-100 p-6">
+              <div className="card p-6">
                 <h2 className="font-semibold mb-6">Risk Assessment</h2>
                 <div className="flex items-center gap-6 mb-6">
                   <div className="relative w-32 h-32">
@@ -215,18 +218,18 @@ export default function ClaimDetail() {
         </div>
 
         <div className="space-y-4">
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
+          <div className="card p-5 space-y-3">
             <h3 className="font-semibold text-sm mb-3">AI Actions</h3>
             <button onClick={handleExtract} disabled={actionLoading} className="w-full bg-purple-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-purple-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2"><Brain size={16} /> Run Extraction</button>
             <button onClick={handleFollowUp} disabled={actionLoading} className="w-full bg-orange-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-orange-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2"><MessageSquare size={16} /> Follow-up Questions</button>
             <button onClick={handleAssessRisk} disabled={actionLoading} className="w-full bg-red-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-red-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2"><Shield size={16} /> Assess Risk</button>
           </div>
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
+          <div className="card p-5 space-y-3">
             <h3 className="font-semibold text-sm mb-3">Customer Response</h3>
             <textarea rows={3} value={responseText} onChange={e => setResponseText(e.target.value)} placeholder="Simulate customer response..." className="input-field" />
             <button onClick={handleRespond} disabled={actionLoading || !responseText.trim()} className="w-full bg-cyan-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-cyan-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2"><Send size={16} /> Send Response</button>
           </div>
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
+          <div className="card p-5 space-y-3">
             <h3 className="font-semibold text-sm mb-3">Human Decision</h3>
             <textarea rows={2} value={actionNotes} onChange={e => setActionNotes(e.target.value)} placeholder="Notes (optional)..." className="input-field" />
             <div className="space-y-2">
