@@ -1,9 +1,18 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { submitClaim } from "@/lib/api";
+import { ArrowLeft, ArrowRight, CheckCircle, User, FileText, MapPin, DollarSign } from "lucide-react";
+import clsx from "clsx";
+
+const steps = [
+  { id: 1, label: "Personal", icon: User },
+  { id: 2, label: "Details", icon: FileText },
+  { id: 3, label: "Review", icon: CheckCircle },
+];
 
 export default function SubmitClaim() {
+  const [step, setStep] = useState(1);
   const [form, setForm] = useState({
     customer_name: "",
     customer_email: "",
@@ -18,8 +27,9 @@ export default function SubmitClaim() {
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const update = (field: string, value: string) => setForm({ ...form, [field]: value });
+
+  const handleSubmit = async () => {
     setLoading(true);
     setError("");
     try {
@@ -42,24 +52,29 @@ export default function SubmitClaim() {
 
   if (result) {
     return (
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
-          <h2 className="text-2xl font-bold text-green-800 mb-2">Claim Submitted</h2>
-          <p className="text-green-700 mb-4">Your claim has been received successfully.</p>
-          <div className="bg-white rounded-lg p-4 text-left mb-4">
-            <p className="text-sm text-gray-500">Claim ID</p>
-            <p className="font-mono text-sm">{result.id}</p>
-            <p className="text-sm text-gray-500 mt-2">Status</p>
-            <p className="font-medium capitalize">{result.status}</p>
+      <div className="max-w-lg mx-auto text-center py-12">
+        <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <CheckCircle className="text-green-600" size={40} />
+        </div>
+        <h2 className="text-2xl font-bold mb-2">Claim Submitted!</h2>
+        <p className="text-gray-500 mb-6">Your claim has been received and is being processed.</p>
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6 text-left">
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-gray-500 text-sm">Claim ID</span>
+              <span className="font-mono text-sm">{result.id?.slice(0, 8)}...</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500 text-sm">Status</span>
+              <span className="text-sm font-medium capitalize">{result.status}</span>
+            </div>
           </div>
-          <div className="flex gap-3 justify-center">
-            <a href="/dashboard" className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 text-sm">
-              View Dashboard
-            </a>
-            <button onClick={() => { setResult(null); setForm({ customer_name: "", customer_email: "", raw_description: "", policy_number: "", incident_type: "", incident_date: "", incident_location: "", estimated_amount: "" }); }} className="bg-white border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 text-sm">
-              Submit Another
-            </button>
-          </div>
+        </div>
+        <div className="flex gap-3 justify-center">
+          <a href="/dashboard" className="btn-primary">View Dashboard</a>
+          <button onClick={() => { setResult(null); setStep(1); setForm({ customer_name: "", customer_email: "", raw_description: "", policy_number: "", incident_type: "", incident_date: "", incident_location: "", estimated_amount: "" }); }} className="btn-secondary">
+            Submit Another
+          </button>
         </div>
       </div>
     );
@@ -67,65 +82,138 @@ export default function SubmitClaim() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Submit an Insurance Claim</h1>
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
-        {error && <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm">{error}</div>}
+      {/* Step Indicator */}
+      <div className="flex items-center justify-center gap-4 mb-10">
+        {steps.map((s, i) => (
+          <div key={s.id} className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className={clsx(
+                "w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all",
+                step >= s.id ? "bg-brand-600 text-white" : "bg-gray-100 text-gray-400"
+              )}>
+                {step > s.id ? <CheckCircle size={18} /> : s.id}
+              </div>
+              <span className={clsx("text-sm font-medium hidden sm:block", step >= s.id ? "text-brand-600" : "text-gray-400")}>
+                {s.label}
+              </span>
+            </div>
+            {i < steps.length - 1 && <div className={clsx("w-12 h-0.5", step > s.id ? "bg-brand-600" : "bg-gray-200")} />}
+          </div>
+        ))}
+      </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-            <input type="text" required value={form.customer_name} onChange={e => setForm({ ...form, customer_name: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+      {error && <div className="bg-red-50 text-red-700 p-4 rounded-xl mb-6 text-sm">{error}</div>}
+
+      <div className="bg-white rounded-2xl border border-gray-100 p-8">
+        {/* Step 1: Personal */}
+        {step === 1 && (
+          <div className="space-y-5 animate-fade-in">
+            <h2 className="text-xl font-bold mb-6">Personal Information</h2>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+              <input type="text" required value={form.customer_name} onChange={e => update("customer_name", e.target.value)} placeholder="John Doe" className="input-field" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+              <input type="email" required value={form.customer_email} onChange={e => update("customer_email", e.target.value)} placeholder="john@example.com" className="input-field" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Policy Number</label>
+              <input type="text" value={form.policy_number} onChange={e => update("policy_number", e.target.value)} placeholder="POL-2024-XXX" className="input-field" />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-            <input type="email" required value={form.customer_email} onChange={e => setForm({ ...form, customer_email: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+        )}
+
+        {/* Step 2: Details */}
+        {step === 2 && (
+          <div className="space-y-5 animate-fade-in">
+            <h2 className="text-xl font-bold mb-6">Incident Details</h2>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+              <textarea required rows={4} value={form.raw_description} onChange={e => update("raw_description", e.target.value)} placeholder="Describe what happened in detail..." className="input-field" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Incident Type</label>
+                <select value={form.incident_type} onChange={e => update("incident_type", e.target.value)} className="input-field">
+                  <option value="">Select type</option>
+                  {["Car accident", "Theft", "Fire", "Water damage", "Natural disaster", "Liability", "Other"].map(t => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                <input type="date" value={form.incident_date} onChange={e => update("incident_date", e.target.value)} className="input-field" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                <input type="text" value={form.incident_location} onChange={e => update("incident_location", e.target.value)} placeholder="City" className="input-field" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Estimated Amount ($)</label>
+                <input type="number" value={form.estimated_amount} onChange={e => update("estimated_amount", e.target.value)} placeholder="5000" className="input-field" />
+              </div>
+            </div>
           </div>
+        )}
+
+        {/* Step 3: Review */}
+        {step === 3 && (
+          <div className="space-y-5 animate-fade-in">
+            <h2 className="text-xl font-bold mb-6">Review Your Claim</h2>
+            <div className="space-y-3">
+              {[
+                { label: "Name", value: form.customer_name },
+                { label: "Email", value: form.customer_email },
+                { label: "Policy", value: form.policy_number || "Not provided" },
+                { label: "Type", value: form.incident_type || "Not specified" },
+                { label: "Date", value: form.incident_date || "Not specified" },
+                { label: "Location", value: form.incident_location || "Not specified" },
+                { label: "Amount", value: form.estimated_amount ? $ : "Not specified" },
+              ].map((item) => (
+                <div key={item.label} className="flex justify-between py-2 border-b border-gray-50">
+                  <span className="text-gray-500 text-sm">{item.label}</span>
+                  <span className="text-sm font-medium">{item.value}</span>
+                </div>
+              ))}
+              {form.raw_description && (
+                <div className="mt-4">
+                  <p className="text-gray-500 text-sm mb-2">Description</p>
+                  <p className="text-sm bg-gray-50 rounded-xl p-4">{form.raw_description}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Navigation */}
+        <div className="flex justify-between mt-8 pt-6 border-t border-gray-100">
+          <button onClick={() => setStep(Math.max(1, step - 1))} disabled={step === 1} className="btn-secondary disabled:opacity-30 flex items-center gap-2">
+            <ArrowLeft size={16} /> Previous
+          </button>
+          {step < 3 ? (
+            <button onClick={() => setStep(Math.min(3, step + 1))} className="btn-primary flex items-center gap-2">
+              Next <ArrowRight size={16} />
+            </button>
+          ) : (
+            <button onClick={handleSubmit} disabled={loading} className="btn-primary flex items-center gap-2">
+              {loading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  Submit Claim <ArrowRight size={16} />
+                </>
+              )}
+            </button>
+          )}
         </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Description of Incident *</label>
-          <textarea required rows={4} value={form.raw_description} onChange={e => setForm({ ...form, raw_description: e.target.value })} placeholder="Describe what happened in detail..." className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Policy Number</label>
-            <input type="text" value={form.policy_number} onChange={e => setForm({ ...form, policy_number: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Incident Type</label>
-            <select value={form.incident_type} onChange={e => setForm({ ...form, incident_type: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500">
-              <option value="">Select type</option>
-              <option value="Car accident">Car Accident</option>
-              <option value="Theft">Theft</option>
-              <option value="Fire">Fire</option>
-              <option value="Water damage">Water Damage</option>
-              <option value="Natural disaster">Natural Disaster</option>
-              <option value="Liability">Liability</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Date of Incident</label>
-            <input type="date" value={form.incident_date} onChange={e => setForm({ ...form, incident_date: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-            <input type="text" value={form.incident_location} onChange={e => setForm({ ...form, incident_location: e.target.value })} placeholder="City" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Estimated Amount ($)</label>
-            <input type="number" value={form.estimated_amount} onChange={e => setForm({ ...form, estimated_amount: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
-          </div>
-        </div>
-
-        <button type="submit" disabled={loading} className="w-full bg-brand-600 text-white py-3 rounded-lg font-medium hover:bg-brand-700 disabled:opacity-50">
-          {loading ? "Submitting..." : "Submit Claim"}
-        </button>
-      </form>
+      </div>
     </div>
   );
 }
