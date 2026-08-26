@@ -63,7 +63,11 @@ const columns = [
   },
   {
     id: "action",
-    cell: () => <ArrowUpRight size={14} className="text-zinc-300" />,
+    cell: (info: any) => (
+      <a href={`/dashboard/${info.row.original.id}`} className="text-zinc-300 hover:text-zinc-600 transition-colors">
+        <ArrowUpRight size={14} />
+      </a>
+    ),
   },
 ];
 
