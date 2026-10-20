@@ -1,14 +1,17 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
+import type { ColumnDef } from "@tanstack/react-table";
 import { listClaims, getDashboardSummary } from "@/lib/api";
+import type { ClaimListItem, ClaimStatus, DashboardSummary, RiskLevel } from "@/lib/types";
 import { DataTable } from "@/components/DataTable";
+import { RequireAuth } from "@/components/AuthProvider";
 import RiskBadge from "@/components/RiskBadge";
 import StatusBadge from "@/components/StatusBadge";
-import { FileText, AlertTriangle, CheckCircle, Clock, ArrowUpRight } from "lucide-react";
+import { FileText, AlertTriangle, CheckCircle, Clock, ArrowUpRight, MessageSquare } from "lucide-react";
 
 function getInitials(name: string) {
-  return name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
+  return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 }
 
 function timeAgo(date: string) {
@@ -19,76 +22,106 @@ function timeAgo(date: string) {
   return `${Math.floor(seconds / 86400)}d ago`;
 }
 
-const columns = [
+const STATUS_OPTIONS: { value: ClaimStatus | ""; label: string }[] = [
+  { value: "", label: "All statuses" },
+  { value: "submitted", label: "Submitted" },
+  { value: "follow_up", label: "Follow-up" },
+  { value: "ready_for_review", label: "Ready" },
+  { value: "under_review", label: "Reviewing" },
+  { value: "escalated", label: "Escalated" },
+  { value: "approved", label: "Approved" },
+  { value: "rejected", label: "Rejected" },
+];
+
+const RISK_OPTIONS: { value: RiskLevel | ""; label: string }[] = [
+  { value: "", label: "All risk levels" },
+  { value: "high", label: "High" },
+  { value: "medium", label: "Medium" },
+  { value: "low", label: "Low" },
+  { value: "unrated", label: "Unrated" },
+];
+
+const columns: ColumnDef<ClaimListItem>[] = [
   {
     accessorKey: "customer_name",
     header: "Customer",
-    cell: (info: any) => (
+    cell: (info) => (
       <div className="flex items-center gap-2.5">
         <div className="w-8 h-8 bg-zinc-100 border border-zinc-200 rounded-lg flex items-center justify-center text-zinc-600 text-[11px] font-medium">
-          {getInitials(info.getValue())}
+          {getInitials(info.getValue<string>())}
         </div>
-        <span className="text-sm font-medium">{info.getValue()}</span>
+        <span className="text-sm font-medium">{info.getValue<string>()}</span>
       </div>
     ),
   },
   {
     accessorKey: "incident_type",
     header: "Type",
-    cell: (info: any) => <span className="text-sm text-zinc-500">{info.getValue() || "—"}</span>,
+    cell: (info) => <span className="text-sm text-zinc-500">{info.getValue<string | null>() || "—"}</span>,
   },
   {
     accessorKey: "estimated_amount",
     header: "Amount",
-    cell: (info: any) => (
-      <span className="text-sm font-medium">
-        {info.getValue() ? `$${Number(info.getValue()).toLocaleString()}` : "—"}
-      </span>
-    ),
+    sortingFn: (a, b) => Number(a.original.estimated_amount ?? 0) - Number(b.original.estimated_amount ?? 0),
+    cell: (info) => {
+      const value = info.getValue<string | null>();
+      return <span className="text-sm font-medium">{value ? `$${Number(value).toLocaleString()}` : "—"}</span>;
+    },
   },
   {
     accessorKey: "status",
     header: "Status",
-    cell: (info: any) => <StatusBadge status={info.getValue()} />,
+    cell: (info) => <StatusBadge status={info.getValue<string>()} />,
   },
   {
     accessorKey: "risk_level",
     header: "Risk",
-    cell: (info: any) => <RiskBadge level={info.getValue()} />,
+    cell: (info) => <RiskBadge level={info.getValue<string>()} />,
   },
   {
     accessorKey: "created_at",
     header: "Date",
-    cell: (info: any) => <span className="text-sm text-zinc-400">{timeAgo(info.getValue())}</span>,
+    cell: (info) => <span className="text-sm text-zinc-400">{timeAgo(info.getValue<string>())}</span>,
   },
   {
     id: "action",
-    cell: (info: any) => (
-      <a href={`/dashboard/${info.row.original.id}`} className="text-zinc-300 hover:text-zinc-600 transition-colors">
+    cell: (info) => (
+      <a href={`/dashboard/${info.row.original.id}`} aria-label="Open claim" className="text-zinc-300 hover:text-zinc-600 transition-colors">
         <ArrowUpRight size={14} />
       </a>
     ),
   },
 ];
 
-export default function Dashboard() {
-  const [claims, setClaims] = useState<any[]>([]);
-  const [summary, setSummary] = useState<any>(null);
+function DashboardContent() {
+  const [claims, setClaims] = useState<ClaimListItem[]>([]);
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [status, setStatus] = useState<ClaimStatus | "">("");
+  const [risk, setRisk] = useState<RiskLevel | "">("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
+      setLoading(true);
       try {
         const [claimsData, summaryData] = await Promise.all([
-          listClaims({ limit: 50 }),
+          listClaims({ status, risk_level: risk, limit: 100 }),
           getDashboardSummary(),
         ]);
+        if (cancelled) return;
         setClaims(claimsData);
         setSummary(summaryData);
-      } catch (err) { console.error(err); }
-      finally { setLoading(false); }
+        setError("");
+      } catch (err) {
+        if (!cancelled) setError(err instanceof Error ? err.message : "Could not load claims");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     })();
-  }, []);
+    return () => { cancelled = true; };
+  }, [status, risk]);
 
   return (
     <div className="space-y-6">
@@ -102,14 +135,18 @@ export default function Dashboard() {
         </a>
       </div>
 
+      {error && (
+        <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm border border-red-200">{error}</div>
+      )}
+
       {summary && (
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 stagger-children">
           {[
             { label: "Total Claims", value: summary.total_claims || 0, icon: FileText },
-            { label: "Submitted", value: summary.by_status?.submitted || 0, icon: Clock },
-            { label: "Under Review", value: summary.by_status?.under_review || 0, icon: AlertTriangle },
-            { label: "High Risk", value: summary.by_risk?.high || 0, icon: AlertTriangle },
-            { label: "Approved", value: summary.by_status?.approved || 0, icon: CheckCircle },
+            { label: "Awaiting Customer", value: summary.by_status.follow_up || 0, icon: MessageSquare },
+            { label: "To Review", value: (summary.by_status.ready_for_review || 0) + (summary.by_status.under_review || 0) + (summary.by_status.escalated || 0), icon: Clock },
+            { label: "High Risk", value: summary.by_risk.high || 0, icon: AlertTriangle },
+            { label: "Approved", value: summary.by_status.approved || 0, icon: CheckCircle },
           ].map((kpi) => (
             <div key={kpi.label} className="card p-4">
               <div className="flex items-center justify-between mb-2">
@@ -121,6 +158,15 @@ export default function Dashboard() {
           ))}
         </div>
       )}
+
+      <div className="flex flex-wrap gap-3">
+        <select aria-label="Filter by status" value={status} onChange={(e) => setStatus(e.target.value as ClaimStatus | "")} className="input-field w-auto">
+          {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+        <select aria-label="Filter by risk" value={risk} onChange={(e) => setRisk(e.target.value as RiskLevel | "")} className="input-field w-auto">
+          {RISK_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+      </div>
 
       {loading ? (
         <div className="card p-16 flex items-center justify-center">
@@ -139,5 +185,13 @@ export default function Dashboard() {
         />
       )}
     </div>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <RequireAuth>
+      <DashboardContent />
+    </RequireAuth>
   );
 }

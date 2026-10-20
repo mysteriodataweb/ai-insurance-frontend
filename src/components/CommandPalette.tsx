@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useRef } from "react";
 import { Search, FileText, LayoutDashboard, BarChart3, ArrowRight } from "lucide-react";
@@ -13,17 +13,16 @@ const actions = [
   { id: "submit", label: "Submit New Claim", icon: FileText, href: "/submit" },
   { id: "analytics", label: "View Analytics", icon: BarChart3, href: "/analytics" },
   { id: "login", label: "Sign In", icon: ArrowRight, href: "/login" },
+  { id: "register", label: "Create an Account", icon: ArrowRight, href: "/register" },
 ];
 
 export default function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // The palette is mounted on open, so the query starts empty each time.
   useEffect(() => {
-    if (isOpen) {
-      setQuery("");
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
+    if (isOpen) setTimeout(() => inputRef.current?.focus(), 50);
   }, [isOpen]);
 
   useEffect(() => {

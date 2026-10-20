@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { ArrowUp, ArrowDown, ArrowRight } from "lucide-react";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import clsx from "clsx";
@@ -30,6 +30,7 @@ export default function ProgressMetricCard({
   color = "#27272a",
 }: ProgressMetricCardProps) {
   const [view, setView] = useState<"area" | "bar">("area");
+  const gradientId = `grad-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
 
   const vals = data.map((d) => d.value);
   const sum = vals.reduce((a, b) => a + b, 0);
@@ -62,7 +63,7 @@ export default function ProgressMetricCard({
           {view === "area" ? (
             <AreaChart data={data}>
               <defs>
-                <linearGradient id={`grad-${title}`} x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor={color} stopOpacity={0.08} />
                   <stop offset="100%" stopColor={color} stopOpacity={0} />
                 </linearGradient>
@@ -71,7 +72,7 @@ export default function ProgressMetricCard({
               <XAxis dataKey="date" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} width={28} />
               <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #e4e4e7", fontSize: 12 }} />
-              <Area type="monotone" dataKey="value" stroke={color} strokeWidth={1.5} fill={`url(#grad-${title})`} />
+              <Area type="monotone" dataKey="value" stroke={color} strokeWidth={1.5} fill={`url(#${gradientId})`} />
             </AreaChart>
           ) : (
             <BarChart data={data}>
@@ -86,11 +87,15 @@ export default function ProgressMetricCard({
       </div>
 
       <div className="flex items-center justify-between px-5 py-3 border-t border-zinc-100 text-xs">
-        <div className="flex items-center gap-1.5">
-          <TrendIcon size={13} className="text-zinc-400" />
-          <span className="font-medium">{delta ?? "+12%"}</span>
-          <span className="text-zinc-400">{deltaLabel}</span>
-        </div>
+        {delta ? (
+          <div className="flex items-center gap-1.5">
+            <TrendIcon size={13} className="text-zinc-400" />
+            <span className="font-medium">{delta}</span>
+            <span className="text-zinc-400">{deltaLabel}</span>
+          </div>
+        ) : (
+          <span />
+        )}
         <div className="flex items-center gap-2 text-zinc-400">
           <span><span className="font-medium text-zinc-600">{peak}</span> peak</span>
           <span>·</span>
