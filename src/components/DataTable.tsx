@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import {
@@ -8,6 +8,7 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   flexRender,
+  type ColumnDef,
   type SortingState,
   type ColumnFiltersState,
 } from "@tanstack/react-table";
@@ -16,14 +17,14 @@ import { ArrowUpDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Se
 import clsx from "clsx";
 
 interface DataTableProps<TData> {
-  columns: any[];
+  columns: ColumnDef<TData>[];
   data: TData[];
   searchKey?: string;
   searchPlaceholder?: string;
   pageSize?: number;
 }
 
-export function DataTable<TData extends Record<string, any>>({
+export function DataTable<TData>({
   columns,
   data,
   searchKey,
@@ -131,7 +132,7 @@ export function DataTable<TData extends Record<string, any>>({
       {/* Pagination */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-500">
-          Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+          Page {table.getState().pagination.pageIndex + 1} of {Math.max(1, table.getPageCount())}
         </p>
         <div className="flex items-center gap-1">
           <button onClick={() => table.setPageIndex(0)} disabled={!table.getCanPreviousPage()} className="btn-ghost p-2 disabled:opacity-30">

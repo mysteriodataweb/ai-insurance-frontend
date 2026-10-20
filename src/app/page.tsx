@@ -1,6 +1,7 @@
-﻿"use client";
+"use client";
 
-import { Shield, ArrowRight, Brain, Zap, Users, Lock, Clock, Eye, CheckCircle2, BarChart3 } from "lucide-react";
+import { Shield, ArrowRight, Brain, Zap, Users, Lock, Eye, CheckCircle2, BarChart3, FileText } from "lucide-react";
+import Link from "next/link";
 import AnimatedCounter from "@/components/AnimatedCounter";
 
 const features = [
@@ -17,7 +18,7 @@ const features = [
   {
     icon: Users,
     title: "Human-in-the-Loop",
-    description: "High-risk decisions require human approval for AI safety.",
+    description: "Every decision is human. High-risk approvals need a second reviewer.",
   },
   {
     icon: Lock,
@@ -28,13 +29,11 @@ const features = [
 
 const steps = [
   { num: "01", title: "Submit", description: "Customer submits claim", icon: FileText },
-  { num: "02", title: "Extract", description: "AI extracts information", icon: Brain },
+  { num: "02", title: "Extract", description: "AI extracts information automatically", icon: Brain },
   { num: "03", title: "Score", description: "Risk analysis performed", icon: BarChart3 },
   { num: "04", title: "Review", description: "Human reviews if needed", icon: Eye },
   { num: "05", title: "Decide", description: "Final decision made", icon: CheckCircle2 },
 ];
-
-import { FileText } from "lucide-react";
 
 export default function Home() {
   return (
@@ -61,17 +60,17 @@ export default function Home() {
               Submit a Claim
               <ArrowRight size={16} />
             </a>
-            <a href="/dashboard" className="btn-secondary">
+            <Link href="/dashboard" className="btn-secondary">
               View Dashboard
-            </a>
+            </Link>
           </div>
         </div>
 
         <div className="mt-16 grid grid-cols-3 gap-8 max-w-md">
           {[
-            { value: 68, suffix: "%", label: "Time Saved" },
-            { value: 40, suffix: "%", label: "Automated" },
-            { value: 5, suffix: "", label: "Sample Claims" },
+            { value: 7, suffix: "", label: "Risk signal types" },
+            { value: 2, suffix: "", label: "Reviewers for high risk" },
+            { value: 100, suffix: "%", label: "Decisions audited" },
           ].map((stat) => (
             <div key={stat.label}>
               <p className="text-2xl font-bold text-zinc-900">
@@ -131,22 +130,14 @@ export default function Home() {
       {/* Metrics */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { title: "Processing Time", before: "25 min", after: "8 min", saved: "68%" },
-          { title: "Automation Rate", value: "40%", sub: "of claims auto-processed" },
-          { title: "Risk Detection", value: "3", sub: "risk levels (Low / Med / High)" },
+          { title: "Automatic Triage", value: "On submit", sub: "Extraction, risk scoring and follow-up run on submission" },
+          { title: "Four-Eyes Rule", value: "2 people", sub: "High-risk claims are escalated, then approved by a second reviewer" },
+          { title: "Risk Detection", value: "3 levels", sub: "Low / Medium / High, every signal explained" },
         ].map((m) => (
           <div key={m.title} className="card p-5">
             <p className="text-sm text-zinc-500 mb-2">{m.title}</p>
-            {m.before ? (
-              <div className="flex items-baseline gap-2">
-                <span className="text-sm text-zinc-400 line-through">{m.before}</span>
-                <ArrowRight size={12} className="text-zinc-300" />
-                <span className="text-2xl font-bold">{m.after}</span>
-              </div>
-            ) : (
-              <p className="text-2xl font-bold">{m.value}</p>
-            )}
-            <p className="text-xs text-zinc-400 mt-1">{m.sub || `Saved ${m.saved}`}</p>
+            <p className="text-2xl font-bold">{m.value}</p>
+            <p className="text-xs text-zinc-400 mt-1">{m.sub}</p>
           </div>
         ))}
       </section>
@@ -155,7 +146,7 @@ export default function Home() {
       <section className="card p-10 text-center">
         <h2 className="text-2xl font-bold mb-3">Ready to Transform Your Operations?</h2>
         <p className="text-zinc-500 mb-6 max-w-md mx-auto">
-          See how AI can reduce processing time by 68% and automate 40% of claims.
+          Submit a claim and watch it get triaged, scored and routed to the right reviewer.
         </p>
         <a href="/submit" className="btn-primary inline-flex items-center gap-2">
           Get Started

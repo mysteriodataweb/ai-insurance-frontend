@@ -1,6 +1,7 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
+import { AuthProvider } from "@/components/AuthProvider";
 
 export const metadata: Metadata = {
   title: "AI Insurance Platform",
@@ -16,10 +17,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className="min-h-screen bg-white">
-        <Sidebar />
-        <div className="lg:ml-[240px] min-h-screen">
-          <main className="p-6 lg:p-8 max-w-[1200px]">{children}</main>
-        </div>
+        <AuthProvider>
+          <Sidebar />
+          <div className="lg:ml-[240px] min-h-screen">
+            <main className="p-6 pt-16 lg:p-8 max-w-[1200px]">{children}</main>
+          </div>
+        </AuthProvider>
       </body>
     </html>
   );

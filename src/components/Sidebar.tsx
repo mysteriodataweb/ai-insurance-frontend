@@ -1,10 +1,11 @@
-﻿"use client";
+"use client";
 
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Home, FileText, LayoutDashboard, BarChart3, Shield, Menu, X, Settings, LogOut, Search } from "lucide-react";
+import { Home, FileText, LayoutDashboard, BarChart3, Shield, Menu, X, LogIn, LogOut, Search } from "lucide-react";
 import clsx from "clsx";
 import CommandPalette from "@/components/CommandPalette";
+import { useAuth } from "@/components/AuthProvider";
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
@@ -15,6 +16,7 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const [cmdOpen, setCmdOpen] = useState(false);
 
@@ -31,7 +33,7 @@ export default function Sidebar() {
 
   return (
     <>
-      <CommandPalette isOpen={cmdOpen} onClose={() => setCmdOpen(false)} />
+      {cmdOpen && <CommandPalette isOpen onClose={() => setCmdOpen(false)} />}
 
       <button
         onClick={() => setOpen(!open)}
@@ -90,22 +92,28 @@ export default function Sidebar() {
           </nav>
 
           <div className="p-3 border-t border-zinc-200 space-y-1">
-            <div className="flex items-center gap-2.5 px-3 py-2">
-              <div className="w-7 h-7 bg-zinc-900 rounded-lg flex items-center justify-center text-white text-[11px] font-medium">
-                A
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium truncate">Ops Agent</p>
-                <p className="text-[11px] text-zinc-400 truncate">admin@insurance.ai</p>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
-              </div>
-            </div>
-            <a href="/login" className="sidebar-link">
-              <LogOut size={16} className="text-zinc-400" />
-              <span>Sign In</span>
-            </a>
+            {user ? (
+              <>
+                <div className="flex items-center gap-2.5 px-3 py-2">
+                  <div className="w-7 h-7 bg-zinc-900 rounded-lg flex items-center justify-center text-white text-[11px] font-medium">
+                    {user.full_name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium truncate">{user.full_name}</p>
+                    <p className="text-[11px] text-zinc-400 truncate">{user.email}</p>
+                  </div>
+                </div>
+                <button onClick={logout} className="sidebar-link w-full">
+                  <LogOut size={16} className="text-zinc-400" />
+                  <span>Sign Out</span>
+                </button>
+              </>
+            ) : (
+              <a href="/login" className="sidebar-link">
+                <LogIn size={16} className="text-zinc-400" />
+                <span>Sign In</span>
+              </a>
+            )}
           </div>
         </div>
       </aside>

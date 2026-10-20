@@ -2,182 +2,156 @@
 
 import { useEffect, useState } from "react";
 import { getAnalyticsMetrics } from "@/lib/api";
+import type { AnalyticsMetrics } from "@/lib/types";
+import { RequireAuth } from "@/components/AuthProvider";
 import ProgressMetricCard from "@/components/ProgressMetricCard";
-import AnimatedCounter from "@/components/AnimatedCounter";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from "recharts";
-import { AlertTriangle, Zap } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { Zap } from "lucide-react";
 
-const riskData = [
-  { name: "Low", value: 1, fill: "#71717a" },
-  { name: "Medium", value: 2, fill: "#a1a1aa" },
-  { name: "High", value: 1, fill: "#27272a" },
-  { name: "Unrated", value: 1, fill: "#e4e4e7" },
-];
+const RISK_COLORS = [
+  { key: "low", name: "Low", fill: "#a1a1aa" },
+  { key: "medium", name: "Medium", fill: "#71717a" },
+  { key: "high", name: "High", fill: "#27272a" },
+  { key: "unrated", name: "Unrated", fill: "#e4e4e7" },
+] as const;
 
-const typeData = [
-  { name: "Car Accident", count: 2 },
-  { name: "Water Damage", count: 1 },
-  { name: "Theft", count: 1 },
-  { name: "Fire", count: 1 },
-];
+function formatPct(value: number | null) {
+  return value === null ? "—" : `${value}%`;
+}
 
-const claimsOverTime = [
-  { date: "Mon", value: 2 },
-  { date: "Tue", value: 1 },
-  { date: "Wed", value: 1 },
-  { date: "Thu", value: 1 },
-  { date: "Fri", value: 0 },
-];
+function formatDuration(hours: number | null) {
+  if (hours === null) return "—";
+  if (hours < 1) return `${Math.round(hours * 60)} min`;
+  if (hours < 48) return `${hours.toFixed(1)} h`;
+  return `${(hours / 24).toFixed(1)} days`;
+}
 
-const weeklyTrend = [
-  { date: "Week 1", value: 2 },
-  { date: "Week 2", value: 3 },
-  { date: "Week 3", value: 1 },
-  { date: "Week 4", value: 4 },
-  { date: "Week 5", value: 2 },
-];
+function shortDate(iso: string) {
+  return new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
 
-const processingTime = [
-  { date: "Manual", value: 25 },
-  { date: "With AI", value: 8 },
-];
-
-export default function Analytics() {
-  const [metrics, setMetrics] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+function AnalyticsContent() {
+  const [metrics, setMetrics] = useState<AnalyticsMetrics | null>(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    getAnalyticsMetrics().then(setMetrics).catch(console.error).finally(() => setLoading(false));
+    getAnalyticsMetrics()
+      .then(setMetrics)
+      .catch((err) => setError(err instanceof Error ? err.message : "Could not load metrics"));
   }, []);
 
-  if (loading) return <div className="flex items-center justify-center py-20"><div className="w-5 h-5 border-2 border-zinc-300 border-t-zinc-600 rounded-full animate-spin" /></div>;
+  if (error) {
+    return <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm border border-red-200">{error}</div>;
+  }
+  if (!metrics) {
+    return <div className="flex items-center justify-center py-20"><div className="w-5 h-5 border-2 border-zinc-300 border-t-zinc-600 rounded-full animate-spin" /></div>;
+  }
+
+  const perDay = metrics.claims_per_day.slice(-7).map((d) => ({ date: shortDate(d.date), value: d.count }));
+  const perWeek = metrics.claims_per_week.map((w) => ({ date: shortDate(w.week_start), value: w.count }));
+  const riskData = RISK_COLORS.map((r) => ({ name: r.name, value: metrics.by_risk[r.key] ?? 0, fill: r.fill }));
+  const hasRiskData = riskData.some((r) => r.value > 0);
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-bold">Analytics</h1>
-        <p className="text-zinc-400 text-sm mt-0.5">Business impact and operational metrics</p>
+        <p className="text-zinc-400 text-sm mt-0.5">Operational metrics computed from live claim data</p>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {[
+          { label: "Total Claims", value: String(metrics.total_claims) },
+          { label: "Awaiting Customer", value: String(metrics.awaiting_customer) },
+          { label: "To Review", value: String(metrics.under_review) },
+          { label: "Decided", value: String(metrics.approved_claims + metrics.rejected_claims) },
+        ].map((kpi) => (
+          <div key={kpi.label} className="card p-4">
+            <p className="text-xs text-zinc-400 font-medium mb-2">{kpi.label}</p>
+            <p className="text-2xl font-bold">{kpi.value}</p>
+          </div>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <ProgressMetricCard
-          title="Claims Volume"
-          data={claimsOverTime}
-          color="#27272a"
-          delta="+25%"
-          deltaLabel="vs last week"
-          trend="up"
-        />
-        <ProgressMetricCard
-          title="Processing Time"
-          data={[
-            { date: "Mon", value: 22 },
-            { date: "Tue", value: 18 },
-            { date: "Wed", value: 15 },
-            { date: "Thu", value: 12 },
-            { date: "Fri", value: 8 },
-          ]}
-          total="8 min"
-          delta="-68%"
-          deltaLabel="vs manual"
-          trend="down"
-          color="#27272a"
-        />
+        <ProgressMetricCard title="Claims Volume (last 7 days)" data={perDay} color="#27272a" />
+        <ProgressMetricCard title="Claims Volume (last 8 weeks)" data={perWeek} color="#27272a" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="card p-6">
           <h3 className="text-sm font-semibold mb-4">Claims by Type</h3>
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={typeData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f4f4f5" />
-              <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="#a1a1aa" />
-              <YAxis tick={{ fontSize: 11 }} stroke="#a1a1aa" />
-              <Tooltip />
-              <Bar dataKey="count" fill="#27272a" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          {metrics.by_type.length === 0 ? (
+            <p className="text-sm text-zinc-400 py-20 text-center">No claims yet</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart data={metrics.by_type}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f4f4f5" />
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="#a1a1aa" />
+                <YAxis allowDecimals={false} tick={{ fontSize: 11 }} stroke="#a1a1aa" />
+                <Tooltip />
+                <Bar dataKey="count" name="Claims" fill="#27272a" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
         <div className="card p-6">
           <h3 className="text-sm font-semibold mb-4">Risk Distribution</h3>
-          <ResponsiveContainer width="100%" height={240}>
-            <PieChart>
-              <Pie data={riskData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={5} dataKey="value">
-                {riskData.map((entry, index) => <Cell key={index} fill={entry.fill} />)}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="flex justify-center gap-4 mt-2">
-            {riskData.map((d) => (
-              <div key={d.name} className="flex items-center gap-1.5 text-xs text-zinc-500">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.fill }} />
-                {d.name}
+          {!hasRiskData ? (
+            <p className="text-sm text-zinc-400 py-20 text-center">No claims yet</p>
+          ) : (
+            <>
+              <ResponsiveContainer width="100%" height={240}>
+                <PieChart>
+                  <Pie data={riskData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={5} dataKey="value">
+                    {riskData.map((entry) => <Cell key={entry.name} fill={entry.fill} />)}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="flex flex-wrap justify-center gap-4 mt-2">
+                {riskData.map((d) => (
+                  <div key={d.name} className="flex items-center gap-1.5 text-xs text-zinc-500">
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.fill }} />
+                    {d.name} ({d.value})
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="card p-6">
-          <h3 className="text-sm font-semibold mb-4">Weekly Trend</h3>
-          <ResponsiveContainer width="100%" height={240}>
-            <AreaChart data={weeklyTrend}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f4f4f5" />
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="#a1a1aa" />
-              <YAxis tick={{ fontSize: 11 }} stroke="#a1a1aa" />
-              <Tooltip />
-              <Area type="monotone" dataKey="value" stroke="#27272a" fill="#27272a" fillOpacity={0.05} strokeWidth={1.5} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="card p-6">
-          <h3 className="text-sm font-semibold mb-4">Processing Time</h3>
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={processingTime} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" stroke="#f4f4f5" />
-              <XAxis type="number" tick={{ fontSize: 11 }} stroke="#a1a1aa" />
-              <YAxis dataKey="date" type="category" tick={{ fontSize: 11 }} width={80} stroke="#a1a1aa" />
-              <Tooltip />
-              <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                {processingTime.map((_, index) => <Cell key={index} fill={index === 0 ? "#a1a1aa" : "#27272a"} />)}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+            </>
+          )}
         </div>
       </div>
 
       <div className="card p-8">
         <div className="flex items-center gap-2 mb-6">
           <Zap size={18} className="text-zinc-400" />
-          <h3 className="text-sm font-semibold">Automation Impact</h3>
+          <h3 className="text-sm font-semibold">Automation &amp; Review</h3>
         </div>
-        <div className="grid grid-cols-3 gap-8">
-          <div className="text-center">
-            <p className="text-zinc-400 text-xs mb-2">Processing Time</p>
-            <div className="flex items-center justify-center gap-2">
-              <span className="text-sm text-zinc-400 line-through">{metrics?.avg_processing_time_before}</span>
-              <span className="text-zinc-300">→</span>
-              <span className="text-2xl font-bold">{metrics?.avg_processing_time_after}</span>
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-8">
+          {[
+            { label: "Processed by AI", value: formatPct(metrics.ai_processed_rate), sub: `${metrics.ai_processed_claims} of ${metrics.total_claims} claims` },
+            { label: "Avg. time to AI triage", value: formatDuration(metrics.avg_triage_minutes === null ? null : metrics.avg_triage_minutes / 60), sub: "submission → extraction" },
+            { label: "Need human review", value: formatPct(metrics.human_review_rate), sub: "medium or high risk" },
+            { label: "Fast-track eligible", value: String(metrics.fast_track_eligible), sub: "low risk, awaiting review" },
+            { label: "Avg. time to decision", value: formatDuration(metrics.avg_decision_hours), sub: "submission → approve/reject" },
+          ].map((m) => (
+            <div key={m.label} className="text-center">
+              <p className="text-zinc-400 text-xs mb-2">{m.label}</p>
+              <p className="text-2xl font-bold">{m.value}</p>
+              <p className="text-[11px] text-zinc-400 mt-1">{m.sub}</p>
             </div>
-          </div>
-          <div className="text-center">
-            <p className="text-zinc-400 text-xs mb-2">Time Saved</p>
-            <p className="text-3xl font-bold"><AnimatedCounter value={68} suffix="%" /></p>
-          </div>
-          <div className="text-center">
-            <p className="text-zinc-400 text-xs mb-2">Automation Rate</p>
-            <p className="text-3xl font-bold"><AnimatedCounter value={40} suffix="%" /></p>
-          </div>
+          ))}
         </div>
-      </div>
-
-      <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-4 text-sm text-zinc-500">
-        Note: Processing time metrics are simulated for demonstration purposes.
       </div>
     </div>
+  );
+}
+
+export default function Analytics() {
+  return (
+    <RequireAuth>
+      <AnalyticsContent />
+    </RequireAuth>
   );
 }
